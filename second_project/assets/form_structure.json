@@ -1,0 +1,62 @@
+{
+  "form_title": "Dynamic Form",
+  "fields": [
+    {
+      "type": "text",
+      "label": "Name",
+      "placeholder": "Enter your name",
+      "required": true
+    },
+    {
+      "type": "email",
+      "label": "Email",
+      "placeholder": "Enter your email",
+      "required": true
+    },
+    {
+      "type": "password",
+      "label": "Password",
+      "placeholder": "Enter your password",
+      "required": true
+    },
+    {
+      "type": "number",
+      "label": "Age",
+      "placeholder": "Enter your age",
+      "required": false
+    },
+    {
+      "type": "dropdown",
+      "label": "Gender",
+      "options": ["Male", "Female"],
+      "required": true
+    },
+    {
+      "type": "checkbox",
+      "label": "Agree to Terms",
+      "required": true
+    },
+    {
+      "type": "radio",
+      "label": "Subscription Plan",
+      "options": ["Free", "Basic", "Premium"],
+      "required": true
+    },
+    {
+      "type": "date",
+      "label": "Date of Birth",
+      "required": false
+    },
+    {
+      "type": "time",
+      "label": "Preferred Contact Time",
+      "required": false
+    },
+    {
+      "type": "textarea",
+      "label": "Address",
+      "placeholder": "Enter your full address",
+      "required": false
+    }
+  ]
+}
