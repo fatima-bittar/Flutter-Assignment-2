@@ -1,14 +1,21 @@
 const express = require('express');
 const router = express.Router();
-const { getFormStructure, createForm, getAllForms } = require('../controllers/formController');
+const { getFormStructure, createForm, getAllForms, removeForm, editForm } = require('../controllers/formController');
+const { verifyToken, isAdmin } = require('../utils/authMiddleWares'); // Assuming this is your authentication middleware
 
 // Route to fetch a form structure by ID
 router.get('/form_structure/:id', getFormStructure);
 
-// Route to create a new form
-router.post('/create_form', createForm);
+// Route to create a new form (with user authentication)
+router.post('/create_form', verifyToken, createForm);  // Only authenticated users can create a form
 
 // Route to fetch all form structures (fields)
-router.get('/form_structures', getAllForms);  // New endpoint to get all forms
+router.get('/form_structures', getAllForms);
+
+// Route to delete a form
+router.delete('/:id', removeForm);
+
+// Update a form
+router.put('/:id' , editForm);
 
 module.exports = router;

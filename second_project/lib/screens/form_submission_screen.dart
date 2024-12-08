@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/responseform_model.dart';
+import '../services/submissions_service.dart';
 import '../services/form_service.dart';
+import '../utils/auth_provider.dart';
 import '../widgets/dynamic_form.dart';
-import '../utils/database_helper.dart'; // Import the DatabaseHelper for local storage
-import 'package:connectivity_plus/connectivity_plus.dart'; // To check network connectivity
+import '../utils/database_helper.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class FormScreen extends StatefulWidget {
-  final int formId; // Accept formId as a required parameter
+  final int formId;
+
   const FormScreen({super.key, required this.formId});
 
   @override
@@ -17,7 +21,7 @@ class _FormScreenState extends State<FormScreen> {
   FormStructure? formStructure;
   final Map<String, dynamic> formData = {};
   final _formKey = GlobalKey<FormState>();
-  final DatabaseHelper _databaseHelper = DatabaseHelper(); // Initialize database helper
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
 
   @override
   void initState() {
@@ -25,17 +29,24 @@ class _FormScreenState extends State<FormScreen> {
     _fetchFormStructure();
   }
 
-  // Method to check network connectivity
+  // Checks if the device is online
   Future<bool> _isOnline() async {
     final connectivityResult = await (Connectivity().checkConnectivity());
     return connectivityResult != ConnectivityResult.none;
   }
 
-  // Fetch the form structure from the server
+  // Fetches the form structure based on the form ID
   Future<void> _fetchFormStructure() async {
+    final token = Provider.of<UserProvider>(context, listen: false).token;
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User is not authenticated.')),
+      );
+      return;
+    }
+
     try {
-      final data = await FormService.fetchFormStructure(widget.formId);
-      print('Fetched data: $data');
+      final data = await FormService.fetchFormStructure(formId: widget.formId, token: token);
       if (data != null && data.isNotEmpty) {
         setState(() {
           formStructure = FormStructure.fromJson(data);
@@ -51,7 +62,7 @@ class _FormScreenState extends State<FormScreen> {
     }
   }
 
-  // Submit form data based on network connectivity (online or offline)
+  // Submits the form data, checks if online or offline
   Future<void> _submitFormData() async {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -60,42 +71,53 @@ class _FormScreenState extends State<FormScreen> {
       return;
     }
 
-    print('hello before $formData');
+    final token = Provider.of<UserProvider>(context, listen: false).token;
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User is not authenticated.')),
+      );
+      return;
+    }
+
     try {
-      // Check if the device is online
       bool online = await _isOnline();
 
       if (online) {
-        // Submit the form data to the API if online
-        await FormService.submitFormData(formStructure!.id, formData);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Form submitted successfully!')),
-        );
+        if (formStructure != null && formStructure!.id != null) {
+          await SubmissionService.submitFormData(
+            formId: formStructure!.id!,
+            formData: formData,
+            token: token,
+          );
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Form submitted successfully!')),
+          );
 
-        // Clear the form data after successful submission
-        setState(() {
-          formData.clear();
-        });
+          setState(() {
+            formData.clear();
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Form ID is missing.')),
+          );
+        }
       } else {
-        // If offline, save the data locally
         await _databaseHelper.insertSubmission({
-          'form_id': formStructure!.id,
+          'form_id': formStructure!.id!,
           'data': formData,
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('You are offline. Form saved locally.')),
         );
 
-        // Clear the form data after saving it locally
         setState(() {
           formData.clear();
         });
       }
-      print('hello after $formData');
     } catch (error) {
       print('Error in _submitFormData: $error');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to submit form data.')),
+        SnackBar(content: Text('Failed to submit form data: $error')),
       );
     }
   }
@@ -108,7 +130,7 @@ class _FormScreenState extends State<FormScreen> {
       ),
       body: formStructure == null
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,

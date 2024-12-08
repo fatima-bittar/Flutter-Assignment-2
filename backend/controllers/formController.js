@@ -1,31 +1,11 @@
-const { fetchFormStructure, addFormStructure, fetchAllForms } = require('../models/formModel');
-
-// Controller for fetching a specific form structure
-const getFormStructure = (req, res, next) => { 
-  const formId = req.params.id;  // Assuming you pass a formId as a URL param
-  fetchFormStructure(formId)
-    .then((form) => {
-      if (!form) {
-        return res.status(404).json({ message: 'Form not found' });
-      }
-      // Ensure that 'id' and 'name' are included in the response
-      const formData = {
-        id: form.id,  // Add id to the response
-        name: form.name,  // Add name to the response
-        structure: JSON.parse(form.structure),  // Parse the structure
-      };
-
-      res.json(formData);  // Sending back the parsed form structure
-    })
-    .catch((err) => next(err)); // Handling errors
-};
-
+const { addFormStructure, fetchFormStructure, fetchAllForms, updateForm, deleteForm } = require('../models/formModel');
 
 // Controller for creating a new form
 const createForm = (req, res) => {
   const { name, structure } = req.body;  // Expecting name and structure in the request body
+  const created_by = req.user.id; // Extract user ID from the authenticated user
   
-  addFormStructure(name, structure)
+  addFormStructure(name, structure, created_by)
     .then((result) => {
       res.status(201).json({ message: 'Form created successfully', formId: result });
     })
@@ -35,7 +15,26 @@ const createForm = (req, res) => {
     });
 };
 
-// Controller for fetching all form structures (fields)
+// Controller for fetching a specific form structure
+const getFormStructure = (req, res, next) => {
+  const formId = req.params.id;
+
+  fetchFormStructure(formId)
+    .then((form) => {
+      if (!form) {
+        return res.status(404).json({ message: 'Form not found' });
+      }
+      const formData = {
+        id: form.id,
+        name: form.name,
+        structure: JSON.parse(form.structure),
+      };
+      res.json(formData);
+    })
+    .catch((err) => next(err)); 
+};
+
+// Controller for fetching all form structures
 const getAllForms = (req, res, next) => {
   fetchAllForms()
     .then((forms) => {
@@ -43,24 +42,48 @@ const getAllForms = (req, res, next) => {
         return res.status(404).json({ message: 'No forms found' });
       }
 
-      // Map the forms to include both 'name' and 'structure'
-      const formStructures = forms.map((form) => {
-        return {
-          id: form.id, // Assuming 'id' is a field in your form data
-          name: form.name, // Include the name of the form
-          structure: JSON.parse(form.structure), // Parse structure field to JSON
-        };
-      });
+      const formStructures = forms.map((form) => ({
+        id: form.id,
+        name: form.name,
+        structure: JSON.parse(form.structure),
+      }));
 
-      // Send back an array of form objects with name and structure
       res.json(formStructures);
     })
-    .catch((err) => next(err)); // Handle any errors
+    .catch((err) => next(err));
 };
 
+const removeForm = (req, res, next) => {
+  const { id } = req.params;
 
-module.exports = {
-  getFormStructure,
-  createForm,
-  getAllForms, // Exporting the new controller function
+  deleteForm(id)
+    .then(() => res.status(200).json({ message: `Form with ID ${id} deleted successfully.` }))
+    .catch((err) => {
+      if (err.message.includes('No form found')) {
+        res.status(404).json({ message: err.message });
+      } else {
+        next(err);
+      }
+    });
 };
+
+const editForm = (req, res, next) => {
+  const { id } = req.params;
+  const { name, structure } = req.body;
+
+  if (!name || !structure) {
+    return res.status(400).json({ message: 'Name and structure are required for updating the form.' });
+  }
+
+  updateForm(id, name, structure)
+    .then(() => res.status(200).json({ message: `Form with ID ${id} updated successfully.` }))
+    .catch((err) => {
+      if (err.message.includes('No form found')) {
+        res.status(404).json({ message: err.message });
+      } else {
+        next(err);
+      }
+    });
+};
+
+module.exports = { createForm, getFormStructure, getAllForms, removeForm, editForm };

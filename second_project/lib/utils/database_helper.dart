@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
 
 class DatabaseHelper {
   static Database? _database;
@@ -94,6 +92,17 @@ class DatabaseHelper {
     } else {
       return null; // Return null if no form is found
     }
+  }
+  // delete a form
+  Future<int> deleteFormById(int id) async {
+    final db = await database;  // Getting the database instance
+
+    // Deleting the form by its id from the "forms" table
+    return await db.delete(
+      'forms', // The name of the table
+      where: 'id = ?',  // The condition to delete by id
+      whereArgs: [id],  // The id value
+    );
   }
 
   // Fetch all stored submissions for a specific form

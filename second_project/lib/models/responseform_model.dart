@@ -11,7 +11,7 @@ class FormStructure {
 
   factory FormStructure.fromJson(Map<String, dynamic> json) {
     // Parse the 'structure' key to extract 'fields'
-    var fieldsList = (json['structure']['fields'] as List)
+    var fieldsList = (json['structure'] as List)
         .map((field) => Field.fromJson(field))
         .toList();
 

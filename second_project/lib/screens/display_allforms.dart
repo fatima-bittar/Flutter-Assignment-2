@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/form_service.dart';
-import '../utils/database_helper.dart';
-import 'form_screen.dart';
+import '../utils/auth_provider.dart';
+import 'create_edit_form_screen.dart';
+import 'submission_list_screen.dart';
+import 'package:provider/provider.dart';
 
 class DisplayAllForms extends StatefulWidget {
   const DisplayAllForms({super.key});
@@ -11,61 +13,69 @@ class DisplayAllForms extends StatefulWidget {
 }
 
 class _DisplayAllFormsState extends State<DisplayAllForms> {
-  final DatabaseHelper _databaseHelper = DatabaseHelper();
-
-  // Fetch all forms (either from API or local storage)
   Future<List<dynamic>> _fetchAllForms() async {
+    final token = Provider.of<UserProvider>(context, listen: false).token;
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User is not authenticated.')),
+      );
+      return [];
+    }
     try {
-      // First, attempt to fetch forms from the local database
-      final localForms = await _databaseHelper.fetchForms();
-
-      if (localForms.isNotEmpty) {
-        return localForms; // Return forms from local database if available
-      } else {
-        // If no forms in the local database, fetch from the API
-        final forms = await FormService.fetchAllForms();
-
-        // Save the fetched forms into the local database
-        for (var form in forms) {
-          await _databaseHelper.insertForm({
-            'id': form['id'],
-            'name': form['name'],
-            'structure': form['structure'], // Save form structure as JSON string
-          });
-        }
-
-        return forms; // Return the fetched forms from the API
-      }
+      final forms = await FormService.fetchAllForms(token: token);
+      return forms;
     } catch (error) {
-      // Handle errors gracefully
       print('Error fetching forms: $error');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to fetch forms.')),
       );
-      return []; // Return an empty list in case of an error
+      return [];
     }
   }
 
-  // Method to handle form submission
-  Future<void> _submitForm(int formId, Map<String, dynamic> formData) async {
-    try {
-      await _databaseHelper.insertSubmission({
-        'form_id': formId,
-        'data': formData,
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Form submitted successfully!')),
-      );
-    } catch (error) {
-      print('Error submitting form: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to submit form data.')),
-      );
+  Future<void> _deleteForm(int? formId) async {
+    final token = Provider.of<UserProvider>(context, listen: false).token;
+    if (formId != null && token != null) {
+      try {
+        await FormService.deleteForm(formId: formId, token: token);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Form deleted successfully!')),
+        );
+        setState(() {}); // Refresh the form list
+      } catch (error) {
+        print('Error deleting form: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to delete form.')),
+        );
+      }
     }
+  }
+
+  void _navigateToEditCreateScreen(int? formId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateEditFormScreen(formId: formId),
+      ),
+    ).then((_) => setState(() {})); // Refresh the form list after navigating back
+  }
+
+  void _navigateToFormSubmissionScreen(int? formId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SubmissionsScreen(
+          formId: formId ?? 0,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final role = userProvider.role;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Available Forms')),
       body: FutureBuilder<List<dynamic>>(
@@ -80,28 +90,46 @@ class _DisplayAllFormsState extends State<DisplayAllForms> {
 
           final forms = snapshot.data!;
           return ListView.builder(
+            shrinkWrap: true, // Ensures the list takes minimal space
+            physics: const NeverScrollableScrollPhysics(),
             itemCount: forms.length,
             itemBuilder: (context, index) {
               final form = forms[index];
               return ListTile(
-                title: Text(form['name'] ?? 'Unnamed Form'), // Provide a default value
-                onTap: form['id'] != null
-                    ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FormScreen(
-                        formId: form['id'],
-                      ),
+                title: Text(form['name'] ?? 'Unnamed Form'),
+                onTap: () {
+                  _navigateToFormSubmissionScreen(form['id']);
+                },
+                trailing: role == "admin"
+                    ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit),
+                      onPressed: () {
+                        _navigateToEditCreateScreen(form['id']);
+                      },
                     ),
-                  );
-                }
-                    : null, // Disable the tap if `id` is null
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _deleteForm(form['id']),
+                    ),
+                  ],
+                )
+                    : null, // Hide buttons for non-admin users
               );
             },
           );
         },
       ),
+      floatingActionButton: role == "admin"
+          ? FloatingActionButton(
+        onPressed: () {
+          _navigateToEditCreateScreen(null);
+        },
+        child: const Icon(Icons.add),
+      )
+          : null, // Hide the floating action button for non-admin users
     );
   }
 }
