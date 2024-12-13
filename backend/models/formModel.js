@@ -34,6 +34,37 @@ const fetchAllForms = () => {
     });
   });
 };
+
+const fetchAllFormsAndSubmissions = () => {
+  return new Promise((resolve, reject) => {
+    const query = `
+        SELECT 
+          forms.id AS form_id,
+          forms.name AS form_name,
+          forms.structure AS form_structure,
+          forms.is_enabled AS form_status,
+          submissions.id AS submission_id,
+          submissions.data AS submission_data,
+          submissions.submitted_at AS submission_date,
+          submissions.user_id AS user_id
+        FROM 
+          forms
+        LEFT JOIN 
+          submissions ON forms.id = submissions.form_id;
+        `;
+  
+    db.all(query, [], (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows);
+      }
+    });
+  });
+};
+  
+
+
 const deleteForm = (formId) => {
   return new Promise((resolve, reject) => {
     const sql = 'DELETE FROM forms WHERE id = ?';
@@ -71,5 +102,6 @@ module.exports = {
   addFormStructure,
   fetchAllForms,
   deleteForm,
-  updateForm
+  updateForm,
+  fetchAllFormsAndSubmissions
 };

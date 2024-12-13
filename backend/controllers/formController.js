@@ -1,4 +1,4 @@
-const { addFormStructure, fetchFormStructure, fetchAllForms, updateForm, deleteForm } = require('../models/formModel');
+const { addFormStructure, fetchFormStructure, fetchAllForms, updateForm, deleteForm, fetchAllFormsAndSubmissions } = require('../models/formModel');
 
 // Controller for creating a new form
 const createForm = (req, res) => {
@@ -53,6 +53,55 @@ const getAllForms = (req, res, next) => {
     .catch((err) => next(err));
 };
 
+// Controller for fetching the form it's structure and it's submissions
+const getAllFormsAndSubmissions = (req, res, next) => {
+  fetchAllFormsAndSubmissions()
+    .then((rows) => {
+      if (!rows || rows.length === 0) {
+        return res.status(404).json({ message: 'No forms found' });
+      }
+
+      const formsMap = new Map();
+
+      rows.forEach((row) => {
+        const {
+          form_id,
+          form_name,
+          form_structure,
+          form_status,
+          submission_id,
+          submission_data,
+          submission_date,
+          user_id,
+        } = row;
+
+        if (!formsMap.has(form_id)) {
+          formsMap.set(form_id, {
+            id: form_id,
+            name: form_name,
+            structure: JSON.parse(form_structure),
+            is_enabled: form_status,
+            submissions: [],
+          });
+        }
+
+        if (submission_id) {
+          formsMap.get(form_id).submissions.push({
+            id: submission_id,
+            user_id: user_id,
+            data: JSON.parse(submission_data),
+            submitted_at: submission_date,
+          });
+        }
+      });
+
+      const forms = Array.from(formsMap.values());
+      res.status(200).json({ forms });
+    })
+    .catch((err) => next(err));
+};
+
+
 const removeForm = (req, res, next) => {
   const { id } = req.params;
 
@@ -86,4 +135,4 @@ const editForm = (req, res, next) => {
     });
 };
 
-module.exports = { createForm, getFormStructure, getAllForms, removeForm, editForm };
+module.exports = { createForm, getFormStructure, getAllForms, removeForm, editForm,getAllFormsAndSubmissions };

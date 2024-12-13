@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/form_service.dart';
 import '../utils/auth_provider.dart';
-import 'create_edit_form_screen.dart';
+import 'create_form_screen.dart';
 import 'submission_list_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -51,11 +51,11 @@ class _DisplayAllFormsState extends State<DisplayAllForms> {
     }
   }
 
-  void _navigateToEditCreateScreen(int? formId) {
+  void _navigateToCreateScreen(int? formId) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CreateEditFormScreen(formId: formId),
+        builder: (context) => CreateFormScreen(),
       ),
     ).then((_) => setState(() {})); // Refresh the form list after navigating back
   }
@@ -105,12 +105,6 @@ class _DisplayAllFormsState extends State<DisplayAllForms> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.edit),
-                      onPressed: () {
-                        _navigateToEditCreateScreen(form['id']);
-                      },
-                    ),
-                    IconButton(
                       icon: const Icon(Icons.delete),
                       onPressed: () => _deleteForm(form['id']),
                     ),
@@ -125,7 +119,7 @@ class _DisplayAllFormsState extends State<DisplayAllForms> {
       floatingActionButton: role == "admin"
           ? FloatingActionButton(
         onPressed: () {
-          _navigateToEditCreateScreen(null);
+          _navigateToCreateScreen(null);
         },
         child: const Icon(Icons.add),
       )

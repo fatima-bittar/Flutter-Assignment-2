@@ -4,7 +4,7 @@ import '../models/responseform_model.dart';
 import '../services/submissions_service.dart';
 import '../services/form_service.dart';
 import '../utils/auth_provider.dart';
-import '../widgets/dynamic_form.dart';
+import '../widgets/dynamic_form_submission.dart';
 import '../utils/database_helper.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
@@ -47,10 +47,13 @@ class _FormScreenState extends State<FormScreen> {
 
     try {
       final data = await FormService.fetchFormStructure(formId: widget.formId, token: token);
+      print("hello I'm Mr data: $data");
       if (data != null && data.isNotEmpty) {
         setState(() {
           formStructure = FormStructure.fromJson(data);
         });
+        print("hello I'm Mr formstructure data: $formStructure");
+
       } else {
         throw Exception('No data returned from API');
       }

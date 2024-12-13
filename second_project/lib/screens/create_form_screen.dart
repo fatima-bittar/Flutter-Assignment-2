@@ -1,18 +1,20 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/form_service.dart';
 import '../utils/auth_provider.dart';
 
-class CreateEditFormScreen extends StatefulWidget {
-  final int? formId;
+class CreateFormScreen extends StatefulWidget {
 
-  const CreateEditFormScreen({super.key, this.formId});
+
+  const CreateFormScreen({super.key});
 
   @override
-  State<CreateEditFormScreen> createState() => _CreateEditFormScreenState();
+  State<CreateFormScreen> createState() => _CreateFormScreenState();
 }
 
-class _CreateEditFormScreenState extends State<CreateEditFormScreen> {
+class _CreateFormScreenState extends State<CreateFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _structureController = TextEditingController();
@@ -20,63 +22,70 @@ class _CreateEditFormScreenState extends State<CreateEditFormScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.formId != null) {
-      _loadFormData();
-    }
+    // if (widget.formId != null) {
+    //   _loadFormData();
+    // }
   }
 
-  Future<void> _loadFormData() async {
-    final token = Provider.of<UserProvider>(context, listen: false).token;
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('User is not authenticated.')),
-      );
-      return ;
-    }
-    try {
-      final form = await FormService.fetchFormStructure(formId: widget.formId!, token: token);
-      setState(() {
-        _nameController.text = form?['name'] ?? '';
-        _structureController.text = form?['structure'] ?? '';
-      });
-    } catch (error) {
-      print('Error loading form: $error');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to load form details.')),
-      );
-    }
-  }
+  // Future<void> _loadFormData() async {
+  //   final token = Provider.of<UserProvider>(context, listen: false).token;
+  //   if (token == null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('User is not authenticated.')),
+  //     );
+  //     return ;
+  //   }
+  //   try {
+  //     final form = await FormService.fetchFormStructure(formId: widget.formId!, token: token);
+  //     setState(() {
+  //       _nameController.text = form?['name'] ?? '';
+  //       _structureController.text = form?['structure'] ?? '';
+  //     });
+  //   } catch (error) {
+  //     print('Error loading form: $error');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Failed to load form details.')),
+  //     );
+  //   }
+  // }
 
   Future<void> _saveForm() async {
     if (_formKey.currentState!.validate()) {
-      final formData = {
-        'name': _nameController.text,
-        'structure': _structureController.text,
-      };
-      final token = Provider.of<UserProvider>(context, listen: false).token;
-      if (token == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('User is not authenticated.')),
-        );
-        return ;
-      }
+      String structure = _structureController.text;
+
       try {
-        if (widget.formId == null) {
+        // Parse the structure into a JSON object to validate it
+        final parsedStructure = jsonDecode(structure); // Parse structure as JSON object
+        print("Parsed Structure: $parsedStructure");
+
+        final formData = {
+          'name': _nameController.text,
+          'structure': parsedStructure, // Send as JSON, not raw text
+        };
+
+        final token = Provider.of<UserProvider>(context, listen: false).token;
+        if (token == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('User is not authenticated.')),
+          );
+          return;
+        }
+
+        try {
           await FormService.addForm(formData: formData, token: token);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Form created successfully!')),
           );
-        } else {
-          await FormService.editForm(formId: widget.formId!,formData:  formData, token:token);
+          Navigator.pop(context);
+        } catch (error) {
+          print('Error saving form: $error');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Form updated successfully!')),
+            const SnackBar(content: Text('Failed to save form.')),
           );
         }
-        Navigator.pop(context);
-      } catch (error) {
-        print('Error saving form: $error');
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to save form.')),
+          const SnackBar(content: Text('Invalid JSON structure')),
         );
       }
     }
@@ -86,7 +95,7 @@ class _CreateEditFormScreenState extends State<CreateEditFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.formId == null ? 'Create Form' : 'Edit Form'),
+        title: Text('Add Form'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -118,7 +127,7 @@ class _CreateEditFormScreenState extends State<CreateEditFormScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _saveForm,
-                child: Text(widget.formId == null ? 'Create' : 'Save'),
+                child: Text('Create'),
               ),
             ],
           ),

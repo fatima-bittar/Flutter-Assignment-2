@@ -9,17 +9,26 @@ class FormStructure {
     required this.fields,
   });
 
+  // Factory to create FormStructure from JSON
   factory FormStructure.fromJson(Map<String, dynamic> json) {
-    // Parse the 'structure' key to extract 'fields'
     var fieldsList = (json['structure'] as List)
         .map((field) => Field.fromJson(field))
         .toList();
 
     return FormStructure(
       id: json['id'],
-      name: json['name'],  // Assuming the API uses 'name' for the form title
+      name: json['name'], // Assuming the API uses 'name' for the form title
       fields: fieldsList,
     );
+  }
+
+  // Convert FormStructure to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'structure': fields.map((field) => field.toJson()).toList(),
+    };
   }
 }
 
@@ -38,6 +47,7 @@ class Field {
     this.options,
   });
 
+  // Factory to create Field from JSON
   factory Field.fromJson(Map<String, dynamic> json) {
     return Field(
       type: json['type'],
@@ -46,5 +56,16 @@ class Field {
       required: json['required'],
       options: (json['options'] as List?)?.map((e) => e as String).toList(),
     );
+  }
+
+  // Convert Field to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'label': label,
+      'placeholder': placeholder,
+      'required': required,
+      'options': options,
+    };
   }
 }
