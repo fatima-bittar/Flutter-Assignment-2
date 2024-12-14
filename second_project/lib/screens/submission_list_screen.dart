@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // To access UserProvider
 import '../services/submissions_service.dart';
@@ -6,12 +5,11 @@ import '../utils/auth_provider.dart';
 import 'form_submission_screen.dart'; // Import FormScreen
 
 class SubmissionsScreen extends StatefulWidget {
-  final int formId; // Form ID to fetch submissions for
+  final Map<String, dynamic> form; // Accept the entire form object
 
-  // Constructor to accept role and userId
   const SubmissionsScreen({
     super.key,
-    required this.formId,
+    required this.form,
   });
 
   @override
@@ -24,18 +22,18 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchSubmissions(); // Call the new fetch method
+    _fetchSubmissions(); // Call the fetch method
   }
 
   // Fetch submissions with token
   void _fetchSubmissions() {
+    print(widget.form); // Log the form data to debug
     final token = Provider.of<UserProvider>(context, listen: false).token;
+    final formId = widget.form['id']; // Extract formId from the form object
+
     if (token != null) {
       setState(() {
-        _submissionsFuture = SubmissionService.fetchSubmissionsByFormId(
-          formId: widget.formId,
-          token: token,
-        );
+        _submissionsFuture = Future.value(widget.form['submissions'] ?? []);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -47,6 +45,8 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
   // Handle form submission
   Future<void> _handleSubmit(Map<String, dynamic> formData) async {
     final token = Provider.of<UserProvider>(context, listen: false).token;
+    final formId = widget.form['id']; // Extract formId from the form object
+
     if (token == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('User is not authenticated.')),
@@ -56,7 +56,7 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
 
     try {
       await SubmissionService.submitFormData(
-        formId: widget.formId,
+        formId: formId,
         formData: formData,
         token: token,
       );
@@ -101,17 +101,20 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FormScreen(formId: widget.formId),
+        builder: (context) => FormSubmissionScreen(form: widget.form), // Pass entire form object
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    print(widget.form['structure']);
     final userProvider = Provider.of<UserProvider>(context);
     final role = userProvider.role;
+    final formName = widget.form['name'] ?? 'Form'; // Use form name or fallback to 'Form'
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Submissions')),
+      appBar: AppBar(title: Text('$formName Submissions')),
       body: FutureBuilder<List<dynamic>>(
         future: _submissionsFuture,
         builder: (context, snapshot) {
@@ -165,7 +168,6 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
                             ],
                           ),
                         );
-
                       }).toList(),
                     ),
                   ),
@@ -184,11 +186,12 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToFormScreen,
+        onPressed:_navigateToFormScreen,
         child: const Icon(Icons.add),
       ),
     );
   }
+
   String formatKey(String key) {
     return key
         .replaceAll('_', ' ') // Replace underscores with spaces
@@ -196,5 +199,4 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
         .map((word) => word[0].toUpperCase() + word.substring(1)) // Capitalize each word
         .join(' '); // Join words with spaces
   }
-
 }

@@ -60,12 +60,12 @@ class _DisplayAllFormsState extends State<DisplayAllForms> {
     ).then((_) => setState(() {})); // Refresh the form list after navigating back
   }
 
-  void _navigateToFormSubmissionScreen(int? formId) {
+  void _navigateToFormSubmissionScreen(Map<String, dynamic> form) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => SubmissionsScreen(
-          formId: formId ?? 0,
+          form: form, // Pass the entire form object
         ),
       ),
     );
@@ -98,7 +98,7 @@ class _DisplayAllFormsState extends State<DisplayAllForms> {
               return ListTile(
                 title: Text(form['name'] ?? 'Unnamed Form'),
                 onTap: () {
-                  _navigateToFormSubmissionScreen(form['id']);
+                  _navigateToFormSubmissionScreen(form); // Pass the entire form
                 },
                 trailing: role == "admin"
                     ? Row(

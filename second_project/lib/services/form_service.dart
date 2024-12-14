@@ -27,16 +27,20 @@ class FormService {
   // Fetch all forms
   static Future<List<dynamic>> fetchAllForms({required String token}) async {
     final response = await http.get(
-      Uri.parse('$baseUrl/forms/form_structures'),
+      Uri.parse('$baseUrl/forms'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
     if (response.statusCode == 200) {
-      print(response.body);
-      return jsonDecode(response.body);
-
+      // Parse the response to get the "forms" array
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      if (responseData.containsKey('forms')) {
+        return responseData['forms'];
+      } else {
+        throw Exception('Unexpected API response structure.');
+      }
     } else {
       throw Exception(
           'Failed to fetch all forms. Status Code: ${response.statusCode}');
