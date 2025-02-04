@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'screens/display_allforms.dart';
 import 'screens/get_all_users.dart';
+import 'screens/modules_screen.dart';
 import 'screens/registration_login_screen.dart';  // Your AuthScreen (Login/Register)
 import 'screens/admin_dashboard_screen.dart';  // Your Admin Dashboard screen
 import 'screens/user_dashboard.dart';
@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
         '/admin_dashboard': (context) => const AdminDashboard(),  // Admin dashboard route
         '/user_dashboard': (context) => const UserDashboard(), // User dashboard route
         '/get_all_users' : (context) => const AllUsersScreen(),
-        '/get_all_forms': (context) => const DisplayAllForms(),
+        '/get_all_forms': (context) => const ModulesScreen(),
       },
     );
   }

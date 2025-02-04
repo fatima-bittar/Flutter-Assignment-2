@@ -36,14 +36,14 @@ class FormService {
     if (response.statusCode == 200) {
       // Parse the response to get the "forms" array
       final Map<String, dynamic> responseData = jsonDecode(response.body);
-      if (responseData.containsKey('forms')) {
-        return responseData['forms'];
+      if (responseData.containsKey('modules')) {
+        return responseData['modules'];
       } else {
         throw Exception('Unexpected API response structure.');
       }
     } else {
       throw Exception(
-          'Failed to fetch all forms. Status Code: ${response.statusCode}');
+          'Failed to fetch all modules. Status Code: ${response.statusCode}');
     }
   }
 

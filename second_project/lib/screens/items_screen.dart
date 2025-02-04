@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // To access UserProvider
-import '../services/submissions_service.dart';
+import '../services/items_service.dart';
 import '../utils/auth_provider.dart';
-import 'form_submission_screen.dart'; // Import FormScreen
+import 'add_item_screen.dart'; // Import FormScreen
 
-class SubmissionsScreen extends StatefulWidget {
+class ItemsScreen extends StatefulWidget {
   final Map<String, dynamic> form; // Accept the entire form object
 
-  const SubmissionsScreen({
+  const ItemsScreen({
     super.key,
     required this.form,
   });
 
   @override
-  State<SubmissionsScreen> createState() => _SubmissionsScreenState();
+  State<ItemsScreen> createState() => _ItemsScreenState();
 }
 
-class _SubmissionsScreenState extends State<SubmissionsScreen> {
+class _ItemsScreenState extends State<ItemsScreen> {
   late Future<List<dynamic>> _submissionsFuture;
 
   @override
@@ -27,13 +27,12 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
 
   // Fetch submissions with token
   void _fetchSubmissions() {
-    print(widget.form); // Log the form data to debug
     final token = Provider.of<UserProvider>(context, listen: false).token;
     final formId = widget.form['id']; // Extract formId from the form object
 
     if (token != null) {
       setState(() {
-        _submissionsFuture = Future.value(widget.form['submissions'] ?? []);
+        _submissionsFuture = Future.value(widget.form['list'] ?? []);
       });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -101,20 +100,21 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => FormSubmissionScreen(form: widget.form), // Pass entire form object
+        builder: (context) => AddItemScreen(form: widget.form), // Pass entire form object
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    print(widget.form['structure']);
     final userProvider = Provider.of<UserProvider>(context);
     final role = userProvider.role;
     final formName = widget.form['name'] ?? 'Form'; // Use form name or fallback to 'Form'
 
     return Scaffold(
-      appBar: AppBar(title: Text('$formName Submissions')),
+      appBar: AppBar(
+        title: Text('$formName items'),
+      ),
       body: FutureBuilder<List<dynamic>>(
         future: _submissionsFuture,
         builder: (context, snapshot) {
@@ -122,7 +122,7 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No submissions available.'));
+            return const Center(child: Text('No items available.'));
           }
 
           final submissions = snapshot.data!;
@@ -137,8 +137,10 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
               return Card(
                 margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                 elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: ListTile(
-                  title: Text('Submission #${submission['id']}'),
                   subtitle: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
@@ -185,10 +187,12 @@ class _SubmissionsScreenState extends State<SubmissionsScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed:_navigateToFormScreen,
+      floatingActionButton: role == "admin"
+          ? FloatingActionButton(
+        onPressed: _navigateToFormScreen,
         child: const Icon(Icons.add),
-      ),
+      )
+          : null, // Show the floating action button for admin users only
     );
   }
 

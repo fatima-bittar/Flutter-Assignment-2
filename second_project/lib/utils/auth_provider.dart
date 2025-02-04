@@ -28,4 +28,10 @@ class UserProvider with ChangeNotifier {
     _token = null;
     notifyListeners();
   }
+  // Method to log out (clear token and role)
+  void logout() {
+    _token = null;
+    _role = null;
+    notifyListeners(); // Notify listeners so the UI can update
+  }
 }

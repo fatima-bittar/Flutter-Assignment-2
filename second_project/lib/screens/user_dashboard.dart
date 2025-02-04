@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/auth_provider.dart'; // Import the UserProvider
-import 'display_allforms.dart'; // Import the DisplayAllForms screen
+import 'modules_screen.dart'; // Import the DisplayAllForms screen
 
 class UserDashboard extends StatelessWidget {
   const UserDashboard({super.key});
@@ -14,19 +14,31 @@ class UserDashboard extends StatelessWidget {
     final userId = userProvider.userId;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("User Dashboard")),
+      appBar: AppBar(
+        title: const Text("User Dashboard"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              // Implement logout functionality here
+              Navigator.pushReplacementNamed(context, '/auth_screen');
+            },
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             ElevatedButton(
               onPressed: () {
-                // Navigate to DisplayAllForms screen, passing role and userId
+                // Navigate to DisplayAllForms screen
                 Navigator.pushNamed(
-                  context,'/get_all_forms'
+                  context, '/get_all_forms',
                 );
               },
-              child: const Text("View All Forms"),
+              child: const Text("View Modules"),
             ),
           ],
         ),

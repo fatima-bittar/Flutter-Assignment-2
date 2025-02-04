@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/responseform_model.dart';
-import '../services/submissions_service.dart';
+import '../models/form_model.dart';
+import '../services/items_service.dart';
 import '../utils/auth_provider.dart';
 import '../widgets/dynamic_form_submission.dart';
 import '../utils/database_helper.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-class FormSubmissionScreen extends StatefulWidget {
+class AddItemScreen extends StatefulWidget {
   final Map<String, dynamic> form; // Accept the full form object
 
-  const FormSubmissionScreen({super.key, required this.form});
+  const AddItemScreen({super.key, required this.form});
 
   @override
-  _FormSubmissionScreenState createState() => _FormSubmissionScreenState();
+  _AddItemScreenState createState() => _AddItemScreenState();
 }
 
-class _FormSubmissionScreenState extends State<FormSubmissionScreen> {
+class _AddItemScreenState extends State<AddItemScreen> {
   late Map<String, dynamic> form;
   late FormStructure formStructure; // Declare FormStructure
   final Map<String, dynamic> formData = {};
@@ -68,7 +68,7 @@ class _FormSubmissionScreenState extends State<FormSubmissionScreen> {
             token: token,
           );
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Form submitted successfully!')),
+            const SnackBar(content: Text('Item added successfully!')),
           );
 
           setState(() {
@@ -102,12 +102,12 @@ class _FormSubmissionScreenState extends State<FormSubmissionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final form = widget.form;
-
-    if (form['structure'] == null || form['structure'].isEmpty) {
+    final module = widget.form;
+print(module);
+    if (module['form'] == null || module['form'].isEmpty) {
       return Scaffold(
         appBar: AppBar(
-          title: Text(form['name'] ?? 'Form'),
+          title: Text(module['name'] ?? 'Form'),
         ),
         body: const Center(
           child: Text('Failed to load form structure.'),
@@ -117,9 +117,9 @@ class _FormSubmissionScreenState extends State<FormSubmissionScreen> {
 
     // Parse the structure into a FormStructure object
     final formStructure = FormStructure.fromJson({
-      'id': form['id'],
-      'name': form['name'],
-      'structure': form['structure'],
+      'id': module['id'],
+      'name': module['name'],
+      'form': module['form'],
     });
 
     return Scaffold(
@@ -140,7 +140,7 @@ class _FormSubmissionScreenState extends State<FormSubmissionScreen> {
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _submitFormData,
-                child: const Text('Submit'),
+                child: const Text('add'),
               ),
             ],
           ),

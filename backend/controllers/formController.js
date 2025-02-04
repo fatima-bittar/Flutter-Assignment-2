@@ -79,14 +79,14 @@ const getAllFormsAndSubmissions = (req, res, next) => {
           formsMap.set(form_id, {
             id: form_id,
             name: form_name,
-            structure: JSON.parse(form_structure),
-            is_enabled: form_status,
-            submissions: [],
+            form: JSON.parse(form_structure),
+            active: form_status,
+            list: [],
           });
         }
 
         if (submission_id) {
-          formsMap.get(form_id).submissions.push({
+          formsMap.get(form_id).list.push({
             id: submission_id,
             user_id: user_id,
             data: JSON.parse(submission_data),
@@ -95,8 +95,8 @@ const getAllFormsAndSubmissions = (req, res, next) => {
         }
       });
 
-      const forms = Array.from(formsMap.values());
-      res.status(200).json({ forms });
+      const modules = Array.from(formsMap.values());
+      res.status(200).json({ modules });
     })
     .catch((err) => next(err));
 };
